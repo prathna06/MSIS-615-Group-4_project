@@ -4,27 +4,26 @@ import time
 from bs4 import BeautifulSoup
 import requests
 
-
 headers = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
 }
-
 def scrape():
-    base_url = "https://www.usnews.com/best-colleges/rankings/national-universities?_page=%i"
+    base_url = "https://www.usnews.com/best-colleges/search?_sort=rank&_sortDirection=asc&_page=%i"
     nationalUniversityURL = []
-
-    for p in range(1, 41):
+    for p in range(1, 101):
         page = requests.get(base_url % p, headers=headers)
+        print(base_url)
         soup = BeautifulSoup(page.text, 'lxml')
         for i in soup.find_all("a", {"class": "card-more"}):
-
             nationalUniversityURL.append(i['href'])
+          
 
     websiteURL = 'https://www.usnews.com'
     university_data_list = []
 
     for url in nationalUniversityURL:
         page = requests.get(websiteURL + url, headers=headers)
+        print(websiteURL+url)
         soup = BeautifulSoup(page.text, 'html.parser')
 
         university_data = {}
@@ -60,13 +59,13 @@ def scrape():
                 university_data['Student/Faculty Ratio'] = parent.find_all("p")[0].contents[0]
 
         university_data_list.append(university_data)
-
+ 
     return university_data_list
 
-def save_to_csv(data_list, filename='university_data.csv'):
+def save_to_csv(data_list, filename='university_data1.csv'):
     df = pd.DataFrame(data_list)
     df.to_csv(filename, index=False)
-
+ 
 if __name__ == '__main__':
-    university_data = scrape()
+    university_data = scrape()  
     save_to_csv(university_data)
