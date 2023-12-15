@@ -16,8 +16,8 @@ def scrape():
     for p in range(1, 11):
         page = requests.get(base_url % p, headers=headers)
         soup = BeautifulSoup(page.text, 'lxml')
-
         for i in soup.find_all("a", {"class": "card-more"}):
+
             nationalUniversityURL.append(i['href'])
 
     websiteURL = 'https://www.usnews.com'
@@ -28,6 +28,11 @@ def scrape():
         soup = BeautifulSoup(page.text, 'html.parser')
 
         university_data = {}
+        #gtkLHO
+        for i in soup.find_all("h1", {"class": "gtkLHO"}):
+            university_name = i.find('span', class_='HeadingWithIcon__NoWrap-sc-1kfmde2-1').text.strip()
+            print(i.contents[0]+university_name)
+            university_data['University Name'] = i.contents[0]+university_name
 
         for i in soup.find_all("p", {"class": "ckzlaT"}):
             if i.contents == ['Acceptance Rate']:
@@ -42,6 +47,9 @@ def scrape():
             elif i.contents == ['Undergraduate Enrollment']:
                 parent = i.parent
                 university_data['Undergraduate Enrollment'] = parent.find_all("p")[-1].contents[0]
+            elif i.contents == ['Tuition & Fees']:
+                parent = i.parent
+                university_data['Tuition & Fees'] = parent.find_all("p")[-1].contents[0]
 
         for i in soup.find_all("div", {"class": "kMhOFk"}):
             if i.contents == ['4-Year Graduation Rate']:
