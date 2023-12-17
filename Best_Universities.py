@@ -11,9 +11,8 @@ headers = {
 def scrape():
     base_url = "https://www.usnews.com/best-colleges/search?_sort=rank&_sortDirection=asc&_page=%i"
     nationalUniversityURL = []
-    for p in range(1, 1001):
+    for p in range(1, 101):
         page = requests.get(base_url % p, headers=headers)
-        print(base_url)
         soup = BeautifulSoup(page.text, 'lxml')
         for i in soup.find_all("a", {"class": "card-more"}):
             nationalUniversityURL.append(i['href'])
@@ -24,14 +23,13 @@ def scrape():
 
     for url in nationalUniversityURL:
         page = requests.get(websiteURL + url, headers=headers)
-        print(websiteURL+url)
         soup = BeautifulSoup(page.text, 'html.parser')
 
         university_data = {}
         #gtkLHO
         for i in soup.find_all("h1", {"class": "gtkLHO"}):
             university_name = i.find('span', class_='HeadingWithIcon__NoWrap-sc-1kfmde2-1').text.strip()
-            print(i.contents[0]+university_name)
+
             university_data['University Name'] = i.contents[0]+university_name
 
         for i in soup.find_all("p", {"class": "ckzlaT"}):
@@ -67,7 +65,7 @@ def save_to_csv(data_list, filename='university_data1.csv'):
     df = pd.DataFrame(data_list)
 
     # Add ranking column
-    df['Ranking'] = range(1,1001)
+    df['Ranking'] = range(1,len(df.index)+1)
     df.to_csv(filename, index=False)
 
 def save_to_db(df):
@@ -84,13 +82,18 @@ def save_to_db(df):
 
  
 def clean_data(data):
-    data['Ranking'] = range(1,1001)
+    data['Ranking'] = range(1,len(data)+1)
     data['Tuition & Fees'] = pd.to_numeric(data['Tuition & Fees'].str.split('$').str.get(1).str.replace(',',''))
     data['Undergraduate Enrollment'] = pd.to_numeric(data['Undergraduate Enrollment'].str.replace(',',''))
+    data['Acceptance Rate'] = data['Acceptance Rate'].replace('N/A', None)
     data['Acceptance Rate'] = pd.to_numeric(data['Acceptance Rate'].str.split('%').str.get(0))
+    data['SAT Range'] = data['SAT Range'].replace('N/A', None)
     data['Minimum SAT score'] = pd.to_numeric(data['SAT Range'].str.split('-').str.get(0))
+    data['ACT Range'] = data['ACT Range'].replace('N/A', None)
     data['Minimum ACT score'] = pd.to_numeric(data['ACT Range'].str.split('-').str.get(0))
+    data['Graduation Rate'] = data['Graduation Rate'].replace('N/A', None)
     data['Graduation Rate'] = pd.to_numeric(data['Graduation Rate'].str.split('%').str.get(0))
+    data['Student Per Faculty'] = data['Student/Faculty Ratio'].replace('N/A', None)
     data['Student Per Faculty'] = pd.to_numeric(data['Student/Faculty Ratio'].str.split(':').str.get(0))
 
     data = data.dropna()
@@ -98,6 +101,7 @@ def clean_data(data):
     data['Tuition & Fees'] = data['Tuition & Fees'].astype(int)
     data['Undergraduate Enrollment'] = data['Undergraduate Enrollment'].astype(int)
     data['Acceptance Rate'] = data['Acceptance Rate'].astype(int)
+
     data['Minimum SAT score'] = data['Minimum SAT score'].astype(int)
     data['Minimum ACT score'] = data['Minimum ACT score'].astype(int)
     data['Graduation Rate'] = data['Graduation Rate'].astype(int)
@@ -109,6 +113,5 @@ def clean_data(data):
     return data
 
 if __name__ == '__main__':
-   # university_data = scrape()  
-  #save_to_csv(university_data)
-    save_to_db(pd.read_csv('university_data1.csv'))
+    university_data = scrape()  
+    save_to_db(pd.DataFrame(university_data))
